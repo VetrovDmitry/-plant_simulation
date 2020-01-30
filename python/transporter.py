@@ -1,28 +1,52 @@
 from myXOR import XOR as xor
 
 
-class bottle():
+class CreateDevice():
+    """Класс создает девайс(датчик или камеру)
+    
+    Конструктор принимает в качестве аргументов имя девайса и частоту"""
+    def __init__(self, name_='default', frequency_=100):
+        self.characteristic = {
+            'name': name_,
+            'frequency': frequency_,
+        }
+    
+    def deviceInfo(self):
+        """Метод возвращает лист с характеристикой"""
+        return self.characteristic
+    
+    def setInfo(self, char_name, value):
+        """Метод добавляет или изменяет информацию о девайсе"""
+        self.characteristic[char_name] = value
+
+    def delInfo(self, char_name):
+        """Метод удаляет информацию"""
+        self.characteristic.pop(char_name)
+
+
+class Bottle():
     """Класс генерирует заданное количество флаконов
     
     Конструктор принимает диаметр в качестве аргумента"""
-    def __init__(self, diametr_=16):
+    def __init__(self, diametr_=16, quantity_=50):
         self.bottle_size = diametr_
+        self.quantity = quantity_
         self.start_coordinates = 0
      
     def getBottleSize(self):
         """Метод возвращает диаметр сгенерированной партии"""
         return self.bottle_size
 
-    def bottle_set(self, count):
+    def get_bottles(self):
         """Метод возвращает партию флаконов"""
         bottles = list()
-        while count != 0:
+        while self.quantity != 0:
             bottles.append(self.bottle_size)
-            count -=1
+            self.quantity -=1
         return bottles
 
 
-class buffer():
+class Buffer():
     """Метод моделирует работу буфера зоны подачи на конвейер
     
     Конструктор создает кластер из сгенерированных флаконов с определенным промежутком между ними"""
@@ -58,7 +82,7 @@ class buffer():
         return self._items
  
         
-class conveyor():
+class Conveyor():
     """Класс моделирующий работу конвейера
     
     Конструктор принимает: длину конвейера, максимальную скорость перемещения ленты,
@@ -71,25 +95,26 @@ class conveyor():
         self.timer = 0
         self.item_count = 0
         self.items = dict()
+        self.information = dict()
 
-    def setCam(self, x_coordinate=0):
-        """Метод устанавливает камеру для тех. зрения на определенные координаты
+    def setDevice(self, device, x_coordinate=0):
+        """Метод устанавливает девайс на определенные координаты
         (по умолчанию x=0)"""
-        self.cam_coordinate = x_coordinate
+        self.dev_coordinate = x_coordinate
 
     def start(self):
         """Метод запускает конвейер"""
         count = 0
-        while self.cam_coordinate < self.conveyor_length:
-            self.cam_coordinate += 1
+        while self.dev_coordinate < self.conveyor_length:
+            self.dev_coordinate += 1
             self.timer += 1/self.default_speed
-            count += self._checkBuffer(self.cam_coordinate)
-        return {
+            count += self.__checkBuffer(self.dev_coordinate)
+        self.information = {
                 'time': self.timer,
                 'count': count,
                 }
 
-    def _checkBuffer(self, coordinate):
+    def __checkBuffer(self, coordinate):
         """Метод считает количество единиц продукции обработанных камерой"""
         count = 0
         for item in self.buffer:
@@ -105,25 +130,25 @@ class conveyor():
         self.buffer = buffer
         return self.buffer
 
-    def analytics(self, information):
+    def analytics(self):
         """Метод рассчитывает скорость и время обработки продукции камерой"""
-        speed = information.get('count')/information.get('time')
-        information['speed']= int(speed)
-        return information
+        speed = self.information.get('count')/self.information.get('time')
+        self.information['speed']= int(speed)
+        return self.information
 
 
 if __name__ == "__main__":
-    part = bottle(diametr_=30)
-    rr = part.bottle_set(2000)
-    # print(rr)
-    local_buffer = buffer(max_count_=100, range_= 1)
-    Info = local_buffer.putToBuffer(rr)
-    print(Info)
-    full_buffer = local_buffer.getBuffer()
-    # print(full_buffer)
-    CONV = conveyor(velocity_proc_=20)
-    CONV.setCam()
-    CONV.putBufferToConv(full_buffer)
-    stat = CONV.start()
-    # print(stat)
-    print(CONV.analytics(stat))
+    conveyor = Conveyor(50, 1200, 300)
+    camera_1 = CreateDevice('Камера', 100)
+    bottles_batch = Bottle(30, 2000).get_bottles
+    origin_buffer = Buffer(100, 20)
+    origin_buffer.putToBuffer(bottles_batch())
+    buffer = origin_buffer.getBuffer()
+    conveyor.putBufferToConv(buffer)
+    conveyor.setDevice(camera_1)
+    conveyor.start()
+    stat = conveyor.analytics()
+    print(stat)
+
+
+
