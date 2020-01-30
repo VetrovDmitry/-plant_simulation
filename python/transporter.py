@@ -2,14 +2,19 @@ from myXOR import XOR as xor
 
 
 class bottle():
+    """Класс генерирует заданное количество флаконов
+    
+    Конструктор принимает диаметр в качестве аргумента"""
     def __init__(self, diametr_=16):
         self.bottle_size = diametr_
         self.start_coordinates = 0
      
     def getBottleSize(self):
+        """Метод возвращает диаметр сгенерированной партии"""
         return self.bottle_size
 
     def bottle_set(self, count):
+        """Метод возвращает партию флаконов"""
         bottles = list()
         while count != 0:
             bottles.append(self.bottle_size)
@@ -18,15 +23,20 @@ class bottle():
 
 
 class buffer():
+    """Метод моделирует работу буфера зоны подачи на конвейер
+    
+    Конструктор создает кластер из сгенерированных флаконов с определенным промежутком между ними"""
     def __init__(self, max_count_=10, range_=1):
         self._items = list()
-        self.item_count = 0
-        self.max_count = max_count_
-        self.B_B = range_  # mm
+        self.item_count = 0 # - Счетчик поступивших единиц продукции
+        self.max_count = max_count_ # - Максимальное количество флаконов в кластере
+        self.B_B = range_  # mm - Расстояние между флаконами
     
     def putToBuffer(self, element):
-        start_position = 0
+        """Метод загружает сгенерированные единицы продукции в буфер зоны подачи"""
+        start_position = 0 
         end_position = 0
+        # Равномерное распределение продукции по конвейеру
         while xor(self.item_count != self.max_count,self.item_count != len(element)):
             end_position = start_position + element[self.item_count]
             self._items.append([start_position, end_position])
@@ -37,6 +47,7 @@ class buffer():
             'Bottles': self.item_count,
             'Max count': self.max_count,
             'Range': self.B_B,
+            'length': self._items[-1][1]
             }
         return response
 
@@ -45,25 +56,29 @@ class buffer():
 
     def getBuffer(self):
         return self._items
-    
-    def getLong(self):
-        return self._items[-1][1]
+ 
         
-
 class conveyor():
+    """Класс моделирующий работу конвейера
+    
+    Конструктор принимает: длину конвейера, максимальную скорость перемещения ленты,
+    относительную скорость ленты(в процентах)"""
     def __init__(self, velocity_proc_=50, length_=1200, max_speed_=300):
-        max_velocity = max_speed_  # mm/sec
+        max_velocity = max_speed_  # mm/sec - Максимальная скорость
         self.default_speed = velocity_proc_*(max_velocity/100)
-        self.conveyor_length = length_  # mm
+        self.conveyor_length = length_  # mm - Длина конвейера
         self.x_coordinate = None
         self.timer = 0
         self.item_count = 0
         self.items = dict()
 
     def setCam(self, x_coordinate=0):
+        """Метод устанавливает камеру для тех. зрения на определенные координаты
+        (по умолчанию x=0)"""
         self.cam_coordinate = x_coordinate
 
     def start(self):
+        """Метод запускает конвейер"""
         count = 0
         while self.cam_coordinate < self.conveyor_length:
             self.cam_coordinate += 1
@@ -75,6 +90,7 @@ class conveyor():
                 }
 
     def _checkBuffer(self, coordinate):
+        """Метод считает количество единиц продукции обработанных камерой"""
         count = 0
         for item in self.buffer:
             if coordinate <= item[1]:
@@ -85,10 +101,12 @@ class conveyor():
         return count
 
     def putBufferToConv(self, buffer):
+        """Метод отправляет сформированный в буфере кластер на конвейер"""
         self.buffer = buffer
         return self.buffer
 
     def analytics(self, information):
+        """Метод рассчитывает скорость и время обработки продукции камерой"""
         speed = information.get('count')/information.get('time')
         information['speed']= int(speed)
         return information
